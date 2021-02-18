@@ -47,7 +47,8 @@ func main() {
 	bucketsPath := scoopHome() + "\\buckets"
 
 	// get specific buckets
-	buckets, err := ioutil.ReadDir(bucketsPath)
+	// As of Go 1.16, os.ReadDir is a more efficient and correct choice
+	buckets, err := os.ReadDir(bucketsPath)
 	checkWith(err, "Scoop folder does not exist")
 
 	// start workers that will find matching manifests
@@ -60,7 +61,7 @@ func main() {
 
 	for _, bucket := range buckets {
 		wg.Add(1)
-		go func(file os.FileInfo) {
+		go func(file os.DirEntry) {
 			// check if $bucketName/bucket exists, if not use $bucketName
 			bucketPath := bucketsPath + "\\" + file.Name()
 			if f, err := os.Stat(bucketPath + "\\bucket"); !os.IsNotExist(err) && f.IsDir() {
@@ -84,7 +85,7 @@ func main() {
 
 func matchingManifests(path string, term string) (res []match) {
 	term = strings.ToLower(term)
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	check(err)
 
 	var parser fastjson.Parser
